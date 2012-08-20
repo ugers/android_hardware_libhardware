@@ -115,6 +115,8 @@ __BEGIN_DECLS
  * "sup_sampling_rates=44100|48000" */
 #define AUDIO_PARAMETER_STREAM_SUP_SAMPLING_RATES "sup_sampling_rates"
 
+// star add for raw data output
+#define AUDIO_PARAMETER_RAW_DATA_OUT "raw_data_output"
 
 /**************************************/
 
