@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (c) 2012, Code Aurora Forum. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +20,7 @@
 #define ANDROID_AUDIO_HAL_INTERFACE_H
 
 #include <stdint.h>
+#include <string.h>
 #include <strings.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
@@ -117,6 +119,18 @@ __BEGIN_DECLS
 
 // star add for raw data output
 #define AUDIO_PARAMETER_RAW_DATA_OUT "raw_data_output"
+
+/* Query handle fm parameter*/
+#define AUDIO_PARAMETER_KEY_HANDLE_FM "handle_fm"
+
+/* Query voip flag */
+#define AUDIO_PARAMETER_KEY_VOIP_CHECK "voip_flag"
+
+/* Query Fluence type */
+#define AUDIO_PARAMETER_KEY_FLUENCE_TYPE "fluence"
+
+/* Query if surround sound recording is supported */
+#define AUDIO_PARAMETER_KEY_SSR "ssr"
 
 /**************************************/
 
@@ -253,12 +267,41 @@ struct audio_stream_out {
                                uint32_t *dsp_frames);
 
 #ifndef ICS_AUDIO_BLOB
+#ifdef QCOM_HARDWARE
+    /**
+     * start audio data rendering
+     */
+    int (*start)(struct audio_stream_out *stream);
+
+    /**
+     * pause audio rendering
+     */
+    int (*pause)(struct audio_stream_out *stream);
+
+    /**
+     * flush audio data with driver
+     */
+    int (*flush)(struct audio_stream_out *stream);
+
+    /**
+     * stop audio data rendering
+     */
+    int (*stop)(struct audio_stream_out *stream);
+#endif
+
     /**
      * get the local time at which the next write to the audio driver will be presented.
      * The units are microseconds, where the epoch is decided by the local audio HAL.
      */
     int (*get_next_write_timestamp)(const struct audio_stream_out *stream,
                                     int64_t *timestamp);
+#ifdef QCOM_HARDWARE
+    /**
+    * EOS notification from HAL to Flinger
+     */
+    int (*set_observer)(const struct audio_stream_out *stream,
+                               void *observer);
+#endif
 #endif
 
 };
@@ -298,8 +341,41 @@ typedef struct audio_stream_in audio_stream_in_t;
 static inline size_t audio_stream_frame_size(struct audio_stream *s)
 {
     size_t chan_samp_sz;
+    uint32_t chan_mask = s->get_channels(s);
+    int format = s->get_format(s);
 
-    switch (s->get_format(s)) {
+#ifdef QCOM_HARDWARE
+    if (audio_is_input_channel(chan_mask)) {
+        chan_mask &= (AUDIO_CHANNEL_IN_STEREO | \
+                      AUDIO_CHANNEL_IN_MONO );
+    }
+
+    if(!strcmp(s->get_parameters(s, "voip_flag"),"voip_flag=1")) {
+        if(format != AUDIO_FORMAT_PCM_8_BIT)
+            return popcount(chan_mask) * sizeof(int16_t);
+        else
+            return popcount(chan_mask) * sizeof(int8_t);
+    }
+
+    if (audio_is_input_channel(chan_mask)) {
+        chan_mask &= (AUDIO_CHANNEL_IN_STEREO | \
+                      AUDIO_CHANNEL_IN_MONO | \
+                      AUDIO_CHANNEL_IN_5POINT1);
+    }
+#endif
+
+    switch (format) {
+#ifdef QCOM_HARDWARE
+    case AUDIO_FORMAT_AMR_NB:
+        chan_samp_sz = 32;
+        break;
+    case AUDIO_FORMAT_EVRC:
+        chan_samp_sz = 23;
+        break;
+    case AUDIO_FORMAT_QCELP:
+        chan_samp_sz = 35;
+        break;
+#endif
     case AUDIO_FORMAT_PCM_16_BIT:
         chan_samp_sz = sizeof(int16_t);
         break;
@@ -309,7 +385,7 @@ static inline size_t audio_stream_frame_size(struct audio_stream *s)
         break;
     }
 
-    return popcount(s->get_channels(s)) * chan_samp_sz;
+    return popcount(chan_mask) * chan_samp_sz;
 }
 
 
@@ -462,7 +538,18 @@ static inline int audio_hw_device_close(struct audio_hw_device* device)
     return device->common.close(&device->common);
 }
 
-
+#ifdef QCOM_HARDWARE
+#ifdef __cplusplus
+/**
+ *Observer class to post the Events from HAL to Flinger
+*/
+class AudioEventObserver {
+public:
+    virtual ~AudioEventObserver() {}
+    virtual void postEOS(int64_t delayUs) = 0;
+};
+#endif
+#endif
 __END_DECLS
 
 #endif  // ANDROID_AUDIO_INTERFACE_H
