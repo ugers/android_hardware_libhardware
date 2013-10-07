@@ -206,8 +206,8 @@ typedef struct tag_VdrvRect
 
 typedef struct tag_LIBHWCLAYERPARA
 {
-    signed char     bProgressiveSrc;    // Indicating the source is progressive or not
-    signed char     bTopFieldFirst;     // VPO should check this flag when bProgressiveSrc is FALSE
+    unsigned long   number;
+	    
     repeatfield_t               eRepeatField;       // only check it when frame rate is 24FPS and interlace output
     videoinfo_t                 pVideoInfo;         // a pointer to structure stored video information
     panscaninfo_t               pPanScanInfo;
@@ -216,15 +216,17 @@ typedef struct tag_LIBHWCLAYERPARA
     unsigned char               top_index;          // frame buffer index containing the top field
     unsigned long   top_y;              // the address of frame buffer, which contains top field luminance
     unsigned long   top_c;              // the address of frame buffer, which contains top field chrominance
+    unsigned long   bottom_y;           // the address of frame buffer, which contains bottom field luminance
+    unsigned long   bottom_c;           // the address of frame buffer, which contains bottom field chrominance
 
     //the following is just for future
     unsigned char               bottom_index;       // frame buffer index containing the bottom field
-    unsigned long   bottom_y;           // the address of frame buffer, which contains bottom field luminance
-    unsigned long   bottom_c;           // the address of frame buffer, which contains bottom field chrominance
 
     //time stamp of the frame
     unsigned long               uPts;               // time stamp of the frame (ms?)
     unsigned char        first_frame_flg;
+    signed char     bProgressiveSrc;    // Indicating the source is progressive or not
+    signed char     bTopFieldFirst;     // VPO should check this flag when bProgressiveSrc is FALSE
     unsigned long   flag_addr;          //dit maf flag address
     unsigned long   flag_stride;        //dit maf flag line stride
     unsigned char   maf_valid;
