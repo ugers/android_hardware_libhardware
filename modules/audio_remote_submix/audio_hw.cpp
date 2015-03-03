@@ -47,8 +47,8 @@ namespace android {
 //   the duration of a record buffer at the current record sample rate (of the device, not of
 //   the recording itself). Here we have:
 //      3 * 5ms = 15ms < 1024 frames * 1000 / 48000 = 21.333ms
-#define MAX_READ_ATTEMPTS            3
-#define READ_ATTEMPT_SLEEP_MS        5 // 5ms between two read attempts when pipe is empty
+#define MAX_READ_ATTEMPTS            1
+#define READ_ATTEMPT_SLEEP_MS        1 // 5ms between two read attempts when pipe is empty
 #define DEFAULT_RATE_HZ              48000 // default sample rate
 
 struct submix_config {
