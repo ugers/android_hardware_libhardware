@@ -9,5 +9,5 @@ LOCAL_SRC_FILES     := setmacaddr.c
 
 LOCAL_MODULE := setmacaddr
 
-LOCAL_MODULE_TAGS := optional
+#LOCAL_MODULE_TAGS := optional
 include $(BUILD_EXECUTABLE)
